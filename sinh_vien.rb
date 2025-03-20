@@ -1,111 +1,102 @@
-#Tạo danh sách sinh viên
-sinh_vien_list = [
-    {ma_sv:"SV001", ten:"Lê Trúc Phương Quỳnh", tuoi: 21, diem: 8.5}, 
-    {ma_sv:"SV002", ten:"Nguyễn Văn Bá", tuoi: 22, diem: 7.5},
-    {ma_sv:"SV003", ten:"Trần Thị Thanh", tuoi: 20, diem: 9.5},
-    {ma_sv:"SV004", ten:"Trần Nguyễn Hồng Đăng", tuoi: 21, diem:8.0}
-]
-#Thêm sinh viên
-     def them_sinh_vien(danh_sach)
-        print "Nhập mã sinh viên: "
+class Student
+    attr_accessor :ma_sv, :ten, :tuoi, :diem
+    
+    def initialize (ma_sv, ten, tuoi, diem)
+        @ma_sv = ma_sv
+        @ten = ten
+        @tuoi = tuoi
+        @diem = diem
+    end
+    def show
+        puts "
+        Mã SV: #{@ma_sv} 
+        Tên: #{ten} 
+        Tuổi: #{tuoi} 
+        Điểm: #{diem}"
+    end
+end
+class Management
+    attr_accessor :list
+    def initialize
+        @list = []
+    end
+    def add_stu
+        print "Nhập mã SV: "
         ma_sv = gets.chomp
-        print "Nhập tên sinh viên: "
+        print "Nhập tên SV: "
         ten = gets.chomp
-        print "Nhập tuổi: " 
+        print "Nhập tuổi: "
         tuoi = gets.chomp.to_i
         print "Nhập điểm: "
         diem = gets.chomp.to_f
 
-        sinh_vien_moi = {ma_sv: ma_sv, ten: ten, tuoi: tuoi, diem: diem}
-        danh_sach << sinh_vien_moi
-        puts "Thêm sinh viên thành công: #{sinh_vien_moi}"
-     end
-#Hiển thị danh sách sinh viên
-    def hien_thi_danh_sach (danh_sach)
-        if danh_sach.empty?
+        stu = Student.new(ma_sv, ten, tuoi, diem)
+        @list << stu
+        puts "Thêm sinh viên thành công"
+    end
+    def show_list
+        if @list.empty?
             puts "Danh sách sinh viên rỗng"
         else
-        puts "\n Danh sách sinh viên:"
-        danh_sach.each do |sinh_vien|
-            puts "Mã sinh viên: #{sinh_vien[:ma_sv]}"
-            puts "Tên sinh viên: #{sinh_vien[:ten]}"
-            puts "Tuổi: #{sinh_vien[:tuoi]}"
-            puts "Điểm: #{sinh_vien[:diem]}"
+            puts "\n Danh sách sinh viên: "
+            @list.each(&:show)
+        end 
+    end
+    def find_stu_by_ID
+        print "Nhập mã SV cần tìm: "
+        ma_sv = gets.chomp
+        stu = @list.find {|s| s.ma_sv == ma_sv}
+        if stu
+            stu.show
+          else
+            puts "Không tìm thấy sinh viên có mã: #{ma_sv}"
+          end
+    end
+    def average_core
+        return puts "Danh sách rỗng" if @list.empty?
+
+        avr_core = @list.sum(&:diem) / @list.length.to_f
+        puts "\n Điểm trung bình của lớp: #{avr_core.round(2)}"
+    end
+    def find_stu_have_max_core
+        return puts "Danh sách rỗng" if @list.empty?
+        stu_max = @list.max_by(&:diem)
+        puts "\n Sinh viên có điểm cao nhất:"
+        stu_max.show
+    end
+    def list_stu_by_age
+        print "Nhập độ tuổi cần lọc: "
+        tuoi = gets.chomp.to_i
+        stu_list_by_age = @list.select {|s| s.tuoi == tuoi}
+        if stu_list_by_age.empty?
+            puts "Không tìm thấy sinh viên có tuổi #{tuoi}"
+        else
+            puts "\n Danh sách sinh viên có tuổi #{tuoi}: "
+            stu_list_by_age.each(&:show)
         end
     end
-end
-#Tìm sinh viên theo mã sinh viên
-    def tim_sinh_vien_theo_ma_sv(danh_sach)
-        print "Nhập mã sinh viên cần tìm: "
+    def delete_stu_by_ID
+        print "Nhập mã SV cần xóa: "
         ma_sv = gets.chomp
-        sinh_vien = danh_sach.find {|sv| sv[:ma_sv] == ma_sv}
-        if sinh_vien
-            puts "\n Tìm thấy sinh viên: "
-            puts "Mã sinh viên: #{sinh_vien[:ma_sv]}"
-            puts "Tên sinh viên: #{sinh_vien[:ten]}"
-            puts "Tuổi: #{sinh_vien[:tuoi]}"
-            puts "Điểm: #{sinh_vien[:diem]}"
+        stu = @list.find {|s| s.ma_sv == ma_sv}
+        if stu
+            @list.delete(stu)
+            puts "Xóa thành công sinh viên có mã #{ma_sv}"
         else
             puts "Không tìm thấy sinh viên có mã: #{ma_sv}"
         end
     end
-#Phương thức tính điểm trung bình của lớp
-def tinh_diem_trung_binh(danh_sach)
-    return puts "Danh sách rỗng" if danh_sach.empty?
-    tong_diem = danh_sach.sum {|sinh_vien| sinh_vien[:diem]}
-    
-    diem_tb = tong_diem / danh_sach.length.to_f
-puts "\n Điểm trung bình của lớp: #{diem_tb.round(2)}"
 end
+qlsv = Management.new
+qlsv.list = [
+    Student.new("SV001", "Lê Trúc Phương Quỳnh", 21, 8.5),
+    Student.new("SV002", "Nguyễn Văn Bá", 22, 7.5),
+    Student.new("SV003", "Trần Thị Thanh", 20, 9.5),
+    Student.new("SV004", "Trần Nguyễn Hồng Đăng", 21, 8.0)
+]
+chose = 0
 
-#Sinh viên có điểm cao nhất
-def tim_sinh_vien_diem_cao_nhat(danh_sach)
-    return puts "Danh sách rỗng" if danh_sach.empty?
-    sinh_vien_diem_cao_nhat = danh_sach.max_by {|sinh_vien| sinh_vien[:diem]}
-    puts "\n Sinh viên có điểm cao nhất: "
-    puts "Mã sinh viên: #{sinh_vien_diem_cao_nhat[:ma_sv]}"
-    puts "Tên sinh viên: #{sinh_vien_diem_cao_nhat[:ten]}"
-    puts "Tuổi: #{sinh_vien_diem_cao_nhat[:tuoi]}"
-    puts "Điểm: #{sinh_vien_diem_cao_nhat[:diem]}"
-end
-#Lọc danh sách sinh viên theo độ tuổi
-def loc_sinh_vien_theo_tuoi(danh_sach)
-print "Nhập độ tuổi cần lọc:"
-tuoi = gets.chomp.to_i
-danh_sach_loc = danh_sach.select {|sv| sv[:tuoi] == tuoi}
-if danh_sach_loc.empty?
-    puts "Không tìm thấy sinh viên nào có tuổi #{tuoi}"
-else
-    puts "\n Danh sách sinh viên có tuổi #{tuoi}:"
-    danh_sach_loc.each do |sinh_vien|
-        puts "Mã sinh viên: #{sinh_vien[:ma_sv]}"
-        puts "Tên sinh viên: #{sinh_vien[:ten]}"
-        puts "Tuổi: #{sinh_vien[:tuoi]}"
-        puts "Điểm: #{sinh_vien[:diem]}"
-    end
-end
-end
-#Xóa sinh viên theo mã sinh viên
-def xoa_sinh_vien_theo_ma_sv(danh_sach)
-    print "Nhập mã sinh viên cần xóa:"
-ma_sv = gets.chomp
-    sinh_vien = danh_sach.find {|sv| sv[:ma_sv] == ma_sv}
-    if sinh_vien
-        danh_sach.delete(sinh_vien)
-        puts "Xóa sinh viên #{sinh_vien[:ten]}(Ma SV: #{ma_sv})thành công"
-    else
-        puts "Không tìm thấy sinh viên có mã: #{ma_sv}"
-    end
-end
-# sinh_vien_list.each do |sinh_vien|
-#     puts "Mã sinh viên: #{sinh_vien[:ma_sv]}"
-#     puts "Tên sinh viên: #{sinh_vien[:ten]}"
-#     puts "Tuổi: #{sinh_vien[:tuoi]}"
-#     puts "Điểm: #{sinh_vien[:diem]}"
-# end
-#menu
-lua_chon = 0
-while lua_chon != 8
+while chose != 8
     puts "\n Chương trình quản lý sinh viên"
     puts "1. Hiển thị danh sách sinh viên"
     puts "2. Thêm sinh viên"
@@ -116,32 +107,42 @@ while lua_chon != 8
     puts "7. Xóa sinh viên theo mã sinh viên"
     puts "8. Thoát chương trình"
     print "Nhập lựa chọn: "
-    lua_chon = gets.chomp.to_i
-    case lua_chon
-        when 1
-            hien_thi_danh_sach(sinh_vien_list)
-        when 2
-            them_sinh_vien(sinh_vien_list)
-        when 3
-            tim_sinh_vien_theo_ma_sv(sinh_vien_list)
-        when 4
-            tinh_diem_trung_binh(sinh_vien_list)
-        when 5
-            tim_sinh_vien_diem_cao_nhat(sinh_vien_list)
-        when 6
-            loc_sinh_vien_theo_tuoi(sinh_vien_list)
-        when 7
-            xoa_sinh_vien_theo_ma_sv(sinh_vien_list)
-        when 8
-            puts "Thoát chương trình"
-            exit
-        else
-            puts "Lựa chọn không hợp lệ"
-    end
-    puts "\n Nhấn Enter để tiếp tục"
-    gets
+  
+  chose = gets.chomp.to_i
+
+  case chose
+  when 1
+    puts "Bạn đã chọn: Hiển thị danh sách sinh viên"
+    qlsv.show_list
+  when 2
+    puts "Bạn đã chọn: Thêm sinh viên"
+    qlsv.add_stu
+  when 3
+    puts "Bạn đã chọn: Xóa sinh viên"
+    qlsv.delete_stu_by_ID
+  when 4
+    puts "Bạn đã chọn: Tính điểm trung bình của lớp"
+    qlsv.average_core
+  when 5
+    puts "Bạn đã chọn: Sinh viên có điểm cao nhất"
+    qlsv.find_stu_have_max_core
+  when 6
+    puts "Bạn đã chọn: Lọc sinh viên theo tuổi"
+    qlsv.list_stu_by_age
+  when 7
+    puts "Bạn đã chọn: Xóa sinh viên theo mã sinh viên"
+    qlsv.delete_stu_by_ID
+  when 8
+    puts "Thoát chương trình."
+    exit
+  else
+    puts "Lựa chọn không hợp lệ. Vui lòng nhập lại!"
+  end
+  puts "\nNhấn Enter để tiếp tục..."
+  gets
 end
 
 
 
+   
     
