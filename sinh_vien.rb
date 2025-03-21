@@ -1,3 +1,15 @@
+require 'sqlite3'
+
+$db = SQLite3::Database.new "students.db"
+$db.results_as_hash = true
+$db.execute <<-SQL
+CREATE TABLE IF NOT EXISTS students (
+    ma_sv TEXT PRIMARY KEY,
+    ten TEXT,
+    tuoi INTERGER,
+    diem REAL
+);
+SQL
 class Student
     attr_accessor :ma_sv, :ten, :tuoi, :diem
     
@@ -7,19 +19,26 @@ class Student
         @tuoi = tuoi
         @diem = diem
     end
+    def save 
+        $db.execute("INSERT OR REPLACE INTO students (ma_sv, ten, tuoi, diem) VALUES (?, ?, ?, ?)",
+                        [@ma_sv, @ten, @tuoi, @diem])
+    end
+    def self.find_stu_by_ID(ma_sv)
+        row = $db.execute("SELECT * FROM students WHERE ma_sv = ?", [ma_sv]).first
+        row ? Student.new(row["ma_sv"], row["ten"], row["tuoi"], row["diem"]) :nil
+    end
+    def self.delete_stu_by_ID(ma_sv)
+        $db.execute("DELETE FROM students WHERE ma_sv = ?", [ma_sv])
+    end
     def show
         puts "
         Mã SV: #{@ma_sv} 
-        Tên: #{ten} 
-        Tuổi: #{tuoi} 
-        Điểm: #{diem}"
+        Tên: #{@ten} 
+        Tuổi: #{@tuoi} 
+        Điểm: #{@diem}"
     end
 end
 class Management
-    attr_accessor :list
-    def initialize
-        @list = []
-    end
     def add_stu
         print "Nhập mã SV: "
         ma_sv = gets.chomp
@@ -31,21 +50,22 @@ class Management
         diem = gets.chomp.to_f
 
         stu = Student.new(ma_sv, ten, tuoi, diem)
-        @list << stu
+        stu.save
         puts "Thêm sinh viên thành công"
     end
     def show_list
-        if @list.empty?
+        rows = $db.execute("SELECT * FROM students")
+        if rows.empty?
             puts "Danh sách sinh viên rỗng"
         else
             puts "\n Danh sách sinh viên: "
-            @list.each(&:show)
+            rows.each{|row| Student.new(row["ma_sv"], row["ten"], row["tuoi"], row["diem"]).show}    
         end 
     end
     def find_stu_by_ID
         print "Nhập mã SV cần tìm: "
         ma_sv = gets.chomp
-        stu = @list.find {|s| s.ma_sv == ma_sv}
+        stu = Student.find_stu_by_ID(ma_sv)
         if stu
             stu.show
           else
@@ -53,34 +73,38 @@ class Management
           end
     end
     def average_core
-        return puts "Danh sách rỗng" if @list.empty?
-
-        avr_core = @list.sum(&:diem) / @list.length.to_f
-        puts "\n Điểm trung bình của lớp: #{avr_core.round(2)}"
+        return puts "Danh sách rỗng" if Student.count.zero?
+        rows = $db.execute("SELECT AVG(diem) AS avg_score FROM students").first["avg_core"]
+        avg_core = rows["avg_score"]
+        puts "\n Điểm trung bình của lớp: #{avg_core.round(2)}" if avg_core
     end
     def find_stu_have_max_core
-        return puts "Danh sách rỗng" if @list.empty?
-        stu_max = @list.max_by(&:diem)
-        puts "\n Sinh viên có điểm cao nhất:"
-        stu_max.show
+        return puts "Danh sách rỗng" if Student.count.zero?
+        row = $db.execute("SELECT * FROM students ORDER BY diem DESC LIMIT 1").first
+        if row
+            puts "\nSinh viên có điểm cao nhất: "
+            Student.new(row["ma_sv"], row["ten"], row["tuoi"], row["diem"]).show
+        else
+            puts "Danh sách rỗng"
+        end
     end
     def list_stu_by_age
         print "Nhập độ tuổi cần lọc: "
         tuoi = gets.chomp.to_i
-        stu_list_by_age = @list.select {|s| s.tuoi == tuoi}
-        if stu_list_by_age.empty?
+        row = $db.execute("SELECT * FROM students WHERE tuoi = ?", [tuoi])
+        if row.empty?
             puts "Không tìm thấy sinh viên có tuổi #{tuoi}"
         else
             puts "\n Danh sách sinh viên có tuổi #{tuoi}: "
-            stu_list_by_age.each(&:show)
+            rows.each{|row| Student.new(row["ma_sv"], row["ten"], row["tuoi"], row["diem"]).show}
         end
     end
     def delete_stu_by_ID
         print "Nhập mã SV cần xóa: "
         ma_sv = gets.chomp
-        stu = @list.find {|s| s.ma_sv == ma_sv}
+        stu = Student.find_stu_by_ID(ma_sv)
         if stu
-            @list.delete(stu)
+            Student.delete_stu_by_ID(ma_sv)
             puts "Xóa thành công sinh viên có mã #{ma_sv}"
         else
             puts "Không tìm thấy sinh viên có mã: #{ma_sv}"
@@ -88,12 +112,13 @@ class Management
     end
 end
 qlsv = Management.new
-qlsv.list = [
+students = [
     Student.new("SV001", "Lê Trúc Phương Quỳnh", 21, 8.5),
     Student.new("SV002", "Nguyễn Văn Bá", 22, 7.5),
     Student.new("SV003", "Trần Thị Thanh", 20, 9.5),
     Student.new("SV004", "Trần Nguyễn Hồng Đăng", 21, 8.0)
 ]
+students.each(&:save)
 chose = 0
 
 while chose != 8
